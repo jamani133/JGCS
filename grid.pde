@@ -1,16 +1,29 @@
 class Grid{
   
-    PVector size = new PVector(100,100); //target grid size, will be rounded to multiple of screen size
+    PVector size = new PVector(80,80); //target grid size, will be rounded to multiple of screen size
   
     boolean creating = false;
     PVector prv = new PVector(0,0);
-    
+    boolean click_used = false;
+    PVector new_module_end = new PVector(0,0);
+    PVector new_module_start = new PVector(0,0);
     List<ScriptRect> modules = new ArrayList<ScriptRect>();
-  
+    Popup popup = null;
     void init(){
       size.x = float(width)/round(width/size.x);
       size.y = float(height)/round(height/size.y);
-      modules.add(new ScriptRect(this,6,4,2,3));
+    }
+    
+    void popup_render(){
+      if(popup != null){
+        popup.render();
+      }
+    }
+    
+    void popup_click(PVector i_pos){
+      if(popup != null){
+        popup.click(i_pos);
+      }
     }
   
     void render(){
@@ -23,10 +36,22 @@ class Grid{
             }
         }
         
-        
-        for(ScriptRect s : modules){ //render modules
-            s.render();
+
+        for(int i = modules.size() - 1; i >= 0; i--){ //render modules
+            modules.get(i).render();
         }
+        
+        
+        popup_render();
+        
+    }
+    
+    void checkKills(){
+      for(int i = modules.size() - 1; i >= 0; i--){
+        if(modules.get(i).kms){
+          modules.remove(i);
+        }
+      }
     }
     
     ScriptRect moduleAt(){ // get module at position in px
@@ -34,35 +59,73 @@ class Grid{
     }
 
     void click(PVector i_pos){
+        if(popup != null){
+          popup.click(i_pos);
+          return;
+        }
         for(ScriptRect s : modules){
             s.click(i_pos);
         }
     }
 
     void click_special(PVector i_pos){
+        if(popup != null){
+          return;
+        }
         for(ScriptRect s : modules){
             s.click_special(i_pos);
         }
     }
     
     void drag_start(PVector i_pos){
+        if(popup != null){
+          return;
+        }
         for(ScriptRect s : modules){
             s.drag_start(i_pos);
+        }
+        if(!click_used){
+          new_module_start = i_pos;
+          creating = true;
         }
     }
     
     void drag(PVector i_pos){
         prv = i_pos;
+        if(popup != null){
+          return;
+        }
+        if(creating){
+          new_module_end = i_pos;
+          return;
+        }
         for(ScriptRect s : modules){
             s.drag(i_pos);
         }
     }
     
     void drag_end(PVector i_pos){
+        if(creating){
+          new_module_end = i_pos;
+          creating = false;
+          popup = new AddModulePopup(this);
+        }
         for(ScriptRect s : modules){
             s.drag_end(i_pos);
         }
     }
 
+    void module_selected(String id){
+      int px = round(new_module_start.x/size.x);
+      int py = round(new_module_start.y/size.y);
+      int sx = round((new_module_end.x-new_module_start.x)/size.x);
+      int sy = round((new_module_end.y-new_module_start.y)/size.y);
+      if(id == "test"){
+        modules.add(new Test(this,px,py,sx,sy));
+      }
+      if(id == "empty"){
+        modules.add(new ScriptRect(this,px,py,sx,sy));
+      }
+    }
     
 }

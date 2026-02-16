@@ -1,3 +1,8 @@
+PVector mouseDownPos = new PVector(0,0);
+int mouseDownTime = 0;
+boolean mousePrev = false;
+boolean dragging = false;
+
 void mouseHandler(){                            //do the mouse shit and give to grid
   PVector mouse = new PVector(mouseX,mouseY);
   if(mousePressed && !mousePrev){
@@ -21,7 +26,7 @@ void mouseHandler(){                            //do the mouse shit and give to 
       dragging = false;
     }
   }
-  if(mousePressed && (abs(mouseX-mouseDownPos.x)>10 || abs(mouseX-mouseDownPos.x)>10)){
+  if(mousePressed && (dragging || abs(mouseX-mouseDownPos.x)>2 || abs(mouseX-mouseDownPos.x)>2)){
     if(!dragging){
       //start of drag
       grid.drag_start(mouseDownPos);
@@ -32,5 +37,5 @@ void mouseHandler(){                            //do the mouse shit and give to 
     }
   }
   mousePrev = mousePressed;
-  
+  grid.click_used = false;
 }

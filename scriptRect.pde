@@ -7,10 +7,18 @@ class ScriptRect{
     boolean resizing = false;
     boolean moving = false;
     PVector prv = new PVector(0,0);
+    String name = "Basic Module, no function";
+    boolean kms = false;
     
     Grid masterGrid;
     
     void render_content(){}
+    void click_content(PVector i_pos){}
+    void special_click_content(PVector i_pos){}
+    void drag_start_content(PVector i_pos){}
+    void drag_content(PVector i_pos){}
+    void drag_end_content(PVector i_pos){}
+    
     
     ScriptRect(Grid g, int px, int py, int sx, int sy){
       masterGrid = g;
@@ -47,52 +55,77 @@ class ScriptRect{
     }
 
     void click(PVector i_pos){
-        if(i_pos.x < pos.x || pos.x+size.x < i_pos.x || i_pos.y < pos.y || pos.y+size.y < i_pos.y ){
+        if(i_pos.x < pos.x || pos.x+size.x < i_pos.x || i_pos.y < pos.y || pos.y+size.y < i_pos.y || masterGrid.click_used){
           selected = false;
           return;
         }
+        
         selected = true;
-      
+        click_content(i_pos);
+        masterGrid.click_used = true;
     }
 
     void click_special(PVector i_pos){
-        if(i_pos.x < pos.x || pos.x+size.x < i_pos.x || i_pos.y < pos.y || pos.y+size.y < i_pos.y ){
+        if(i_pos.x < pos.x || pos.x+size.x < i_pos.x || i_pos.y < pos.y || pos.y+size.y < i_pos.y || masterGrid.click_used){
           selected = false;
           return;
         }
         selected = true;
+        masterGrid.click_used = true;
+        if(i_pos.x > pos.x && i_pos.y > pos.y && i_pos.x < pos.x+25 && i_pos.y < pos.y+25){
+            masterGrid.popup = new DeletePopup(this);
+            return;
+        }
+        
+        special_click_content(i_pos);
         
     }
     
     void drag_start(PVector i_pos){
-        if(i_pos.x < pos.x || pos.x+size.x < i_pos.x || i_pos.y < pos.y || pos.y+size.y < i_pos.y ){
+        if(i_pos.x < pos.x || pos.x+size.x < i_pos.x || i_pos.y < pos.y || pos.y+size.y < i_pos.y || masterGrid.click_used){
           selected = false;
           return;
         }
+        masterGrid.click_used = true;
         selected = true;
         if(i_pos.x < pos.x+size.x && i_pos.y < pos.y+size.y && (pos.x+size.x-i_pos.x) + (pos.y+size.y-i_pos.y) < 30 ){
             resizing = true;
+            prv = i_pos;
+            return;
         }
         if(i_pos.x > pos.x && i_pos.y > pos.y && i_pos.x < pos.x+25 && i_pos.y < pos.y+25){
             moving = true;
+            prv = i_pos;
+            return;
         }
-        prv = i_pos;
+        drag_start_content(i_pos);
+        
     }
     
     void drag(PVector i_pos){
         prv = i_pos;
+        if(resizing || moving  || masterGrid.click_used){
+          return;
+        }
+        drag_content(i_pos);
     }
     
     void drag_end(PVector i_pos){
+        if(masterGrid.click_used){
+          return;
+        }
         if(resizing){
             resizing = false;
             size.x = max(min_size.x,  snapRound(i_pos.x-pos.x,masterGrid.size.x));
             size.y = max(min_size.y,  snapRound(i_pos.y-pos.y,masterGrid.size.y));
+            return;
         }
         if(moving){
             moving = false;
             pos = snapRound2D(i_pos,masterGrid.size);
+            return;
         }
+        drag_end_content(i_pos);
     }
 
     void reposition(int px,int py, int sx, int sy){ //set position in GU
@@ -102,7 +135,9 @@ class ScriptRect{
         size.y = max(min_size.x,sy*masterGrid.size.y);
     }
     
-    void unselect(){
-        selected=false;
+    void delete(){
+        kms=true;
+        masterGrid.popup = null;
+        masterGrid.checkKills();
     }
 }
