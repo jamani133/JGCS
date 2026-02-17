@@ -8,6 +8,7 @@ class Grid{
     PVector new_module_end = new PVector(0,0);
     PVector new_module_start = new PVector(0,0);
     List<ScriptRect> modules = new ArrayList<ScriptRect>();
+
     Popup popup = null;
     void init(){
       size.x = float(width)/round(width/size.x);
@@ -39,6 +40,7 @@ class Grid{
 
         for(int i = modules.size() - 1; i >= 0; i--){ //render modules
             modules.get(i).render();
+            
         }
         
         
@@ -54,10 +56,6 @@ class Grid{
       }
     }
     
-    ScriptRect moduleAt(){ // get module at position in px
-      return null;
-    }
-
     void click(PVector i_pos){
         if(popup != null){
           popup.click(i_pos);
@@ -120,12 +118,38 @@ class Grid{
       int py = round(new_module_start.y/size.y);
       int sx = round((new_module_end.x-new_module_start.x)/size.x);
       int sy = round((new_module_end.y-new_module_start.y)/size.y);
-      if(id == "test"){
-        modules.add(new Test(this,px,py,sx,sy));
-      }
-      if(id == "empty"){
-        modules.add(new ScriptRect(this,px,py,sx,sy));
-      }
+      modules.add(createFromID(id));
+      modules.get(modules.size()-1).reposition(px,py,sx,sy);
     }
     
+    void saveConfiguration(String fname){
+      JSONArray mods = new JSONArray();
+      for(int i = 0; i<modules.size(); i++){
+        mods.setJSONObject(i,modules.get(i).get_config());
+      }
+      saveJSONArray(mods,"configs/"+fname);
+    }
+    
+    void loadConfiguration(String fname){
+      JSONArray mods = loadJSONArray("configs/"+fname);
+      modules = new ArrayList<ScriptRect>();
+      for(int i = 0; i< mods.size(); i++){
+        JSONObject modu = mods.getJSONObject(i);
+        modules.add(createFromID(modu.getString("module")));
+       
+        modules.get(i).configure(modu);
+      }
+      saveJSONArray(mods,fname);
+    }
+
+    
+    ScriptRect createFromID(String id){
+      if(id.equals("test")){
+        return new Test(this);
+      }
+      if(id.equals("basic")){
+        return new Basic(this);
+      }
+      return new ScriptRect(this);
+    }
 }

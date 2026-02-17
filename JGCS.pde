@@ -12,3 +12,6 @@ void draw(){
   background(0);
   grid.render();
 }
+
+void keyPressed(){
+}
